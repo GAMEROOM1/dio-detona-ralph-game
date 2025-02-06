@@ -1,65 +1,69 @@
 const state = {
   view: {
-    squares: document.querySelectorAll(".square"),
-    enemy: document.querySelector(".enemy"),
-    timeLeft: document.querySelector("#time-left"),
+    squares: document.querySelectorAll(".square"), 
+    timeleft: document.querySelector("#timeleft"),
     score: document.querySelector("#score")
   },
   values: {
+    timeId: null,
     gameVelocity: 1000,
-    hitPosition: 0,
-    result: 0,
-    currentTime: 60
-  },
-  actions: {
-    timerId: setInterval(randomSquare, 1000),
-    countdownTimerId: setInterval(countdown, 1000)
+    timeRemaining: 60,
+    score: 0
   }
 };
-
-function countdown() {
-  state.values.currentTime--;
-  state.view.timeLeft.textContent = state.values.currentTime;
-
-  if(state.values.currentTime <= 0) {
-    clearInterval(state.actions.countdownTimerId);
-    clearInterval(state.actions.timerId);
-    alert("Game over! Seu resultado foi: " + state.values.result);
-  }
-}
-
-function playSound(audioName) {
-  let audio = new Audio(`./src/audio/${audioName}.m4a`);
-  audio.volume = 0.2;
-  audio.play();
-}
 
 function randomSquare() {
   state.view.squares.forEach((square) => {
     square.classList.remove("enemy");
   });
 
-  let randomNumber = Math.floor(Math.random() * 9);
-  let randomSquare = state.view.squares[randomNumber];
+  let randomNumber = Math.floor(Math.random() * state.view.squares.length);
+  let randomSquare = state.view.squares[randomNumber]; 
   randomSquare.classList.add("enemy");
-  state.values.hitPosition = randomSquare.id;
-}
 
-function addListenerHitbox() {
-  state.view.squares.forEach((square) => {
-    square.addEventListener("mousedown", () => {
-      if(square.id === state.values.hitPosition) {
-        state.values.result++;
-        state.view.score.textContent = state.values.result;
-        state.values.hitPosition = null;
-        playSound("hit");
-      }
-    });
+  randomSquare.addEventListener("click", () => {
+    if (randomSquare.classList.contains("enemy")) {
+      state.values.score++;
+      state.view.score.textContent = state.values.score;
+      randomSquare.classList.remove("enemy");
+      playsound(); // Chama a função para tocar a música
+    }
   });
 }
 
+function playsound() {
+  let audio = new Audio("/src/musica/hit.m4a");
+  audio.play();
+}
+
+function moveEnemy() {
+  state.values.timeId = setInterval(randomSquare, state.values.gameVelocity);
+}
+
+function updateTimer() {
+  state.values.timeRemaining--;
+  state.view.timeleft.textContent = state.values.timeRemaining;
+
+  if (state.values.timeRemaining <= 0) {
+    clearInterval(state.values.timeId);
+    alert('Game Over');
+  }
+}
+
+function decreaseVelocity() {
+  if (state.values.gameVelocity > 200) {
+    state.values.gameVelocity -= 50;
+    clearInterval(state.values.timeId);
+    moveEnemy();
+  }
+}
+
 function initialize() {
-  addListenerHitbox();
+  randomSquare();
+  moveEnemy();
+
+  setInterval(updateTimer, 1000);
+  setInterval(decreaseVelocity, 10000);
 }
 
 initialize();
